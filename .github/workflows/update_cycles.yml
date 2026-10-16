@@ -1,0 +1,32 @@
+name: Update cycles data
+
+on:
+  schedule:
+    - cron: "0 6 * * 6"      # every Saturday 06:00 UTC (after Friday's US close)
+  workflow_dispatch:          # lets you also run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install yfinance pandas
+
+      - name: Update CSVs
+        run: python update_cycles.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.csv
+          git diff --cached --quiet || (git commit -m "Weekly cycles data update" && git push)
